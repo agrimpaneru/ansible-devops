@@ -1,8 +1,7 @@
-- name: Deploy Docker Compose App
-  hosts: target_server
-  become: true
-  vars:
-    project_path: "{{ workspace }}"  # Use the passed workspace path
+- name: Deploy Docker Compose App Locally
+  hosts: localhost
+  connection: local  # Runs everything on WSL locally
+  become: true  # Runs commands with sudo
 
   tasks:
     - name: Stop and remove existing containers
@@ -10,12 +9,12 @@
         docker-compose down
         docker rm -f mysql-db || true
       args:
-        chdir: "{{ project_path }}"
+        chdir: "{{ workspace }}"
 
     - name: Start MySQL
       shell: docker-compose up -d db
       args:
-        chdir: "{{ project_path }}"
+        chdir: "{{ workspace }}"
 
     - name: Wait for MySQL to start
       pause:
@@ -24,4 +23,4 @@
     - name: Start other services
       shell: docker-compose up -d
       args:
-        chdir: "{{ project_path }}"
+        chdir: "{{ workspace }}"

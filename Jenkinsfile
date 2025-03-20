@@ -11,8 +11,8 @@ pipeline {
         stage('Deploy using Ansible') {
             steps {
                 script {
-                    // Run Ansible playbook with Jenkins workspace as an extra variable
-                    sh 'ansible-playbook -i /path/to/inventory /path/to/deploy.yml --extra-vars "workspace=${WORKSPACE}"'
+                    // Run Ansible playbook with local execution
+                    sh "ansible-playbook -i 'localhost,' ${WORKSPACE}/deploy.yml --extra-vars 'workspace=${WORKSPACE} ansible_connection=local'"
                 }
             }
         }
