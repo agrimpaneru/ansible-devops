@@ -19,7 +19,7 @@ pipeline {
                     writeFile file: 'inventory.ini', text: '[local]\nlocalhost ansible_connection=local'
                     
                     // Run ansible playbook
-                    sh 'ansible-playbook -i inventory.ini deploy-playbook.yml -e "workspace=${WORKSPACE} deploy_path=${DEPLOY_PATH}"'
+                    ansible-playbook -i inventory.ini deploy-playbook.yml -e "workspace=/var/lib/jenkins/workspace/ansiple-playbook deploy_path=/home/agrim/deploy" --connection=local
                 }
             }
         }

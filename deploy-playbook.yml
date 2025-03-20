@@ -1,26 +1,52 @@
-- name: Deploy Docker Compose App Locally
+---
+- name: Deploy Todo Application
   hosts: localhost
-  connection: local  # Runs everything on WSL locally
-  become: true  # Runs commands with sudo
-
+  connection: local
+  become: false
   tasks:
-    - name: Stop and remove existing containers
-      shell: |
-        docker-compose down
-        docker rm -f mysql-db || true
-      args:
-        chdir: "{{ workspace }}"
+    - name: Create project directory if it doesn't exist
+      file:
+        path: "{{ deploy_path }}/todo-app"
+        state: directory
+        mode: '0755'
 
-    - name: Start MySQL
-      shell: docker-compose up -d db
-      args:
-        chdir: "{{ workspace }}"
+    - name: Copy backend files to deployment directory
+      copy:
+        src: "{{ workspace }}/backend/"
+        dest: "{{ deploy_path }}/todo-app/backend/"
+        mode: '0755'
 
-    - name: Wait for MySQL to start
-      pause:
-        seconds: 60
+    - name: Copy frontend files to deployment directory
+      copy:
+        src: "{{ workspace }}/frontend/"
+        dest: "{{ deploy_path }}/todo-app/frontend/"
+        mode: '0755'
 
-    - name: Start other services
-      shell: docker-compose up -d
+    - name: Copy docker-compose.yml
+      copy:
+        src: "{{ workspace }}/docker-compose.yml"
+        dest: "{{ deploy_path }}/todo-app/"
+        mode: '0755'
+
+    - name: Stop previous containers if running
+      command: docker-compose -f {{ deploy_path }}/todo-app/docker-compose.yml down
+      ignore_errors: yes
+
+    - name: Build and start containers
+      command: docker-compose -f {{ deploy_path }}/todo-app/docker-compose.yml up -d --build
       args:
-        chdir: "{{ workspace }}"
+        chdir: "{{ deploy_path }}/todo-app"
+      register: docker_result
+
+    - name: Show docker compose output
+      debug:
+        var: docker_result.stdout_lines
+
+    - name: Check containers status
+      command: docker ps
+      register: docker_ps
+      changed_when: false
+
+    - name: Show running containers
+      debug:
+        var: docker_ps.stdout_lines
